@@ -12,7 +12,7 @@
   ],
   "publish": {
     "provider": "github",
-    "GH_TOKEN": "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",
+    "token": "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",
     "private": true
   },
   "nsis": {
@@ -22,10 +22,7 @@
   },
   "win": {
     "target": "nsis",
-    "icon": "assets/appIcon.ico",
-    "asar": true,
-    "legalTrademarks": "(c) 2022 karippal.in",
-    "publisherName": "karippal.in"
+    "icon": "assets/appIcon.ico"
   },
   "mac": {
     "category": "public.app-category.developer-tools",
