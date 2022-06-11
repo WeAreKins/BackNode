@@ -1,53 +1,46 @@
 {
-  "name": "back",
-  "version": "1.0.1",
-  "description": "Backendless Development",
-  "author": {
-    "name": "WeAreKins",
-    "email": "contact@karippal.in"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/WeAreKins/-back.git"
-  },
-  "license": "MIT",
-  "main": "build/src/index.js",
+  "name": "back-node",
+  "version": "1.0.8",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "build": "tsc && electron-rebuild && cp -R services ./build/src",
-    "electron:start-live": "node ./live-runner.js",
-    "electron:start": "npm run build && electron --inspect=5858 ./",
-    "electron:pack": "npm run build && electron-builder build --dir -c ./electron-builder.config.json",
-    "electron:make": "npm run build && electron-builder build -c ./electron-builder.config.json -p always",
-    "electron:pack:windows": "npm run build && electron-builder build --win --x64 --ia32 --arm64 -c ./electron-builder.config.json -p always",
-    "electron:pack:linux": "npm run build && electron-builder build --mac -c ./electron-builder.config.json -p never",
-    "electron:pack:mac": "npm run build && electron-builder build --linux -c ./electron-builder.config.json -p never",
-    "release": "electron-builder -c ./electron-builder.config.json",
-    "postinstall": "electron-builder install-app-deps"
+    "start": "ts-node ./src/index.ts",
+    "serve": "nodemon ./src/index.ts --config nodemon.json",
+    "build:prod": "webpack",
+    "build": "tsc --build",
+    "build:dist": "npm version patch && tsc --build && cp -rf package.json ./dist && cp -Rf node_modules ./dist && cp -rf ecosystem.config.js ./dist && cp -rf package-lock.json ./dist && cp -Rf dist ../../electron/src/services/back-node && cp -Rf dist ../../electron/src/services/back-node/dist  && cp -Rf ./dist/ ../../../../-back",
+    "clean": "tsc --build --clean",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/cors": "^2.8.12",
+    "nodemon": "^2.0.16",
+    "ts-loader": "^9.3.0",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.4",
+    "webpack": "^5.72.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "@capacitor-community/electron": "^4.1.0",
-    "@capacitor/app": "1.1.1",
-    "@capacitor/cli": "3.5.0",
-    "@capacitor/core": "3.5.0",
-    "@capacitor/haptics": "1.1.4",
-    "@capacitor/keyboard": "1.2.2",
-    "@capacitor/status-bar": "1.0.8",
+    "@types/bcryptjs": "^2.4.2",
+    "@types/express": "^4.17.13",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/node": "^17.0.31",
     "archiver": "^5.3.1",
-    "chokidar": "~3.5.2",
-    "electron-is-dev": "~2.0.0",
-    "electron-serve": "~1.1.0",
-    "electron-unhandled": "~3.0.2",
-    "electron-updater": "~4.3.9",
-    "electron-window-state": "~5.0.3"
-  },
-  "devDependencies": {
-    "electron": "^14.0.0",
-    "electron-builder": "^23.0.3",
-    "electron-rebuild": "^3.2.3",
-    "typescript": "~4.3.5"
-  },
-  "keywords": [
-    "capacitor",
-    "electron"
-  ]
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^7.5.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.1",
+    "fs-extra": "^10.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "knex": "^2.0.0",
+    "mysql2": "^2.3.3",
+    "pg": "^8.7.3",
+    "tedious": "^14.5.0",
+    "tunnel-ssh": "^4.1.6"
+  }
 }
