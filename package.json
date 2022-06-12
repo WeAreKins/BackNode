@@ -1,6 +1,6 @@
 {
   "name": "back-node",
-  "version": "1.0.8",
+  "version": "1.1.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "serve": "nodemon ./src/index.ts --config nodemon.json",
     "build:prod": "webpack",
     "build": "tsc --build",
-    "build:dist": "npm version patch && tsc --build && cp -rf package.json ./dist && cp -Rf node_modules ./dist && cp -rf ecosystem.config.js ./dist && cp -rf package-lock.json ./dist && cp -Rf dist ../../electron/src/services/back-node && cp -Rf dist ../../electron/src/services/back-node/dist  && cp -Rf ./dist/ ../../../../-back",
+    "build:dist": "npm version patch && tsc --build && cp -rf package.json ./dist && cp -Rf node_modules ./dist && cp -rf ecosystem.config.js ./dist && cp -rf package-lock.json ./dist && cp -Rf dist ../../electron/src/services/back-node && cp -Rf dist ../../electron/src/services/back-node/dist  && cp -Rf ./dist/ ../../../../BackNode/",
     "clean": "tsc --build --clean",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

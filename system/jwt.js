@@ -19,7 +19,7 @@ const database_1 = require("../system/database");
 const util_1 = require("./util");
 class JWT {
     constructor(jwt_token = null) {
-        this.JWT_TOKEN = 'BqBAKKNRUQTwJV71s7EdpWuXVF6VSS0ZloQOXFlSdi9b4I80xk7lF3Oa08KUN1FW';
+        this.JWT_TOKEN = '';
         this.OVERRIDE_KEY = "AXVFHAsyQBiJEcjhHQEcbrdqwZdyIvA8";
         if (jwt_token) {
             this.JWT_TOKEN = jwt_token;
