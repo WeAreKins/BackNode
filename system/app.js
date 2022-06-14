@@ -25,7 +25,7 @@ class App {
                 this.sshTunnel = tunnel(sshConfig, (err, server) => {
                     if (err) {
                         console.error("ERROR_ACCESS_TUNNEL", err);
-                        reject(err);
+                        reject({ error_type: "ERROR_ACCESS_TUNNEL", error: err });
                         // throw err;
                     }
                     resolve(server);
@@ -33,7 +33,7 @@ class App {
             }
             catch (err) {
                 console.error("ERROR_ACCESS_TUNNEL_TRY", err);
-                reject(err);
+                reject({ error_type: "ERROR_ACCESS_TUNNEL_TRY", error: err });
             }
         });
         return promise;
@@ -44,7 +44,7 @@ class App {
             db.collectionInit(config, db_port).then(data => {
                 resolve(data);
             }, error => {
-                reject(error);
+                reject({ error_type: "CONNECTION_INIT_ERROR", error: error });
             });
         });
         return promise;
@@ -56,7 +56,7 @@ class App {
             db.execute(config, db_port, query).then((data) => {
                 resolve(data);
             }, (error) => {
-                reject(error);
+                reject({ error_type: "USER_PERMISSION_ERROR", error: error });
             });
         });
         return promise;

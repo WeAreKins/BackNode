@@ -58,6 +58,7 @@ class JWT {
     }
     login(config, db_port, username, password) {
         return __awaiter(this, void 0, void 0, function* () {
+            this.JWT_TOKEN = config.jwt_token;
             const promise = new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 try {
                     // Validate user input
@@ -97,6 +98,7 @@ class JWT {
         });
     }
     register(config, db_port, username, password) {
+        this.JWT_TOKEN = config.jwt_token;
         const promise = new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
                 // Validate user input
