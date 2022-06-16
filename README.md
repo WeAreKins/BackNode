@@ -1,24 +1,74 @@
-# #Back - Codeless Development
+# Hi, I am #Back
+I can convert your database to API just by installing me! 
 
-## About Project
-This repository is where we develop the #Back codeless product services together with the community. 
+I am **#Back**, a no-code microservice to develop RestAPI without coding the backend. I can automatically generate APIs from your database and make your APIs secure with JWT.
 
-Here we are plaing to manage microservice sorurce codes, Bug tacking and Roadmap to future with help of community.
+Supported Microservice Platforms:
+[X] NodeJS
+[ ] PYTHON
+[ ] Java
+[ ] .Net
 
-This source code is available to everyone under the standard MIT license.
+Supported Database Platforms:
+[x] MySQL/MariaDB 
+[ ] Microsoft SQL Server
+[ ] PostgreSQL
+[ ] Oracle Database
 
-## #Back Application
+
+New database platforms are coming shortly! We are in testing.
+
+## I Have a Dream
+My goal is to make development more enjoyable and productive.
+To become a full-stack developer is like being an all-rounder, Which is less enjoyable. My dream is to make a developer into a full-stack developer without knowing about backend technologies.
+
+## Get Started (Installation)
+Please follow the steps to install the **#Back** desktop application.
+- Download the latest reversion of #Back Application form releases
+- Install the application and create an account.
+- Click Create application and enter your Database server Details
+- On the open application, you can see all APIs 
+
+Download the latest version at /github/v/release/WeAreKins/BackNode
+
+## APIs
+The service has two types of APIs, GET to retrieve data and POST to insert or update data.  Please use `Content-Type: application/json` in the request header.
+### DATA APIs
+APIs are generated automatically from a database table called DATA APIs
+> To access DATA APIs, use: *server_url*/**data**/*table_name*
+
+example: `http://localhost/data/users` in this case, Table name users.
+
+|  Methods | Parameter  |  Data Type  |   Remarks |
+| ------------ | ------------ | ------------ | ------------ |
+|  GET | limit  |  Numeric |  Retrive data limit |
+|   |  offset | Numeric  |  Retrive data offset |
+|   |  where |  String | pass entire SQL where contion to query parameter like `id>5 AND active = 1`|
+| POST  | set  | Object  | JSON object of column name and data. example:   |
+|   |  where |  String |  Pass entire SQL where contion to body like `id=15` |
 
 
+In the API method, POST has a where parameter it uses as an update. 
 
-## BackNode
+### Custom API
+For custom APIs SQL is used, for example:
 
-NodeJS based ready use microservice for backendless implimentation.
+`SELECT * FROM users WHERE id={{user_id}}`
 
-### Download
+`{{user_id}}` is a dynamic parameter that can pass through a query parameter in the GET method or with a request body in the POST method.
 
-Goto Download menu in application, doublecheck the configutaion and seve to you local system. 
+### User and Permission Management
+The #Back application is integrated with the user and permission management and uses JWT security to protect APIs from Mellitus activities.
 
-**Please Note:** Incase you Database and application source in same server please remove `Over SSH` option in configuration.
+### Download the NodeJS microservice
 
-### Install
+Go-to Download menu in the application, double-check the configuration, and save the back-node microservice zip file to your local system.
+
+Please Note: In case your database and application source are on the same server, please remove the Over SSH option in configuration.
+Deploy server 
+
+###  Microservice Installation
+Upload the #back-node source to your server and set up your virtual host pointing to the node-back source.
+
+## Thanks
+If you find any issues, please share them with us. Thanks for supporting us.
