@@ -4,16 +4,16 @@ I can convert your database to API just by installing me!
 I am **#Back**, a no-code microservice to develop RestAPI without coding the backend. I can automatically generate APIs from your database and make your APIs secure with JWT.
 
 Supported Microservice Platforms:
-[X] NodeJS
-[ ] PYTHON
-[ ] Java
-[ ] .Net
+- [x] NodeJS
+- [ ]  PYTHON
+- [ ] Java
+- [ ] .Net
 
 Supported Database Platforms:
-[x] MySQL/MariaDB 
-[ ] Microsoft SQL Server
-[ ] PostgreSQL
-[ ] Oracle Database
+- [x] MySQL/MariaDB 
+- [ ] Microsoft SQL Server
+- [ ] PostgreSQL
+- [ ] Oracle Database
 
 
 New database platforms are coming shortly! We are in testing.
