@@ -55,6 +55,13 @@ For custom APIs SQL is used, for example:
 
 `{{user_id}}`is a dynamic parameter that can pass through a query parameter in the GET method or with a request body in the POST method.
 
+Optional Parameters with default value:
+
+`SELECT * FROM users WHERE id={{user_id?'sree'}}`
+
+In case _user_id_ is not defined it automatically take dafault value _'sree'_. You can also use like `{{user_id?}}` so default value will be _null_ incase _user_id_ is not set.
+
+
 ## Download the NodeJS microservice
 Go-to Download menu in the application, double-check the configuration, and save the back-node microservice zip file to your local system.
 
