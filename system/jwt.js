@@ -91,7 +91,7 @@ class JWT {
                     });
                 }
                 catch (err) {
-                    console.log(err);
+                    console.log("JWT_CONNECT_ERROR", err);
                 }
             }));
             return promise;

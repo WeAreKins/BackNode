@@ -30,29 +30,39 @@ class Database {
         switch (db_type) {
             case 'mysql':
             case 'mariadb':
-                knex = require('knex')({
-                    client: 'mysql2',
-                    connection: {
-                        host: db_host,
-                        port: db_port,
-                        user: db_user,
-                        password: db_pass,
-                        database: db_name,
-                        multipleStatements: true
-                    }
-                });
+                try {
+                    knex = require('knex')({
+                        client: 'mysql2',
+                        connection: {
+                            host: db_host,
+                            port: db_port,
+                            user: db_user,
+                            password: db_pass,
+                            database: db_name,
+                            multipleStatements: true
+                        }
+                    });
+                }
+                catch (con_stream_error) {
+                    console.log("EXECUTE_CONSTREAM_ERROR", con_stream_error);
+                }
                 break;
             case 'mssql':
-                knex = require('knex')({
-                    client: 'tedious',
-                    connection: {
-                        host: db_host,
-                        port: db_port,
-                        user: db_user,
-                        password: db_pass,
-                        database: db_name,
-                    }
-                });
+                try {
+                    knex = require('knex')({
+                        client: 'tedious',
+                        connection: {
+                            host: db_host,
+                            port: db_port,
+                            user: db_user,
+                            password: db_pass,
+                            database: db_name,
+                        }
+                    });
+                }
+                catch (con_stream_error) {
+                    console.log("EXECUTE_CONSTREAM_ERROR", con_stream_error);
+                }
                 break;
             case 'pg':
             case 'cockroachdb':
@@ -140,7 +150,7 @@ class Database {
                     knex.destroy();
                     resolve(results[0]);
                 }).catch((error) => {
-                    console.log(error);
+                    console.log("COLLECTION_INIT_DB_ERROR", error);
                     knex.destroy();
                     reject(error);
                 });
@@ -160,7 +170,7 @@ class Database {
                 knex.destroy();
                 resolve(results[0]);
             }).catch((error) => {
-                console.log(error);
+                console.log("CREATE_USER_DB_ERROR", error);
                 knex.destroy();
                 reject(error);
             });

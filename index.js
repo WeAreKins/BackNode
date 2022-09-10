@@ -22,6 +22,7 @@ const cors_1 = __importDefault(require("cors"));
 const fs = require('fs');
 const bodyParser = require('body-parser');
 const path = require('path');
+const os = require('os');
 const corsOptions = {
     origin: '*',
     optionsSuccessStatus: 200,
@@ -37,7 +38,6 @@ app.get("/", (req, res) => {
     res.send(utilities.response(true, "Hello BackNode!"));
 });
 app.post("/", (req, res) => {
-    const os = require('os');
     res.send(utilities.response(true, {
         os: os.platform(),
         release: os.release(),
@@ -49,11 +49,16 @@ app.post("/", (req, res) => {
 app.post("/app/access", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config } = req.body;
     let backConfig;
+    let envPath = null;
     if (config) {
         backConfig = config;
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -69,7 +74,12 @@ app.post("/app/access", (req, res) => __awaiter(void 0, void 0, void 0, function
             }
         }
         application.access(backConfig, PORT).then(success => {
-            res.send(utilities.response(true, "Access success"));
+            const query = "SELECT * FROM _api LIMIT 1";
+            db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => {
+                res.send(utilities.response(true, "Access success"));
+            }, (error) => {
+                res.send(utilities.response(false, error));
+            });
         }, error => {
             res.send(utilities.response(false, error));
         });
@@ -79,13 +89,20 @@ app.post("/app/access", (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 }));
 app.post("/app/init", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { config } = req.body;
+    const { config, local_env } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
+        if (local_env) {
+            fs.writeFileSync(path.resolve(os.tmpdir(), 'environment.json'), JSON.stringify(config));
+        }
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -108,8 +125,12 @@ app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, fun
     if (config) {
         backConfig = config;
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -171,7 +192,7 @@ app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, fun
         result = result.map((row) => row.TABLE_NAME);
         res.send(utilities.response(true, result));
     }, (error) => {
-        console.log(error);
+        console.log("COLLECTION_DATA_FETCH_ERROR", error);
         res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error: error }));
     });
     // }, error => {
@@ -179,19 +200,45 @@ app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, fun
     // });
 }));
 app.post("/app/query", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { config, sql } = req.body;
+    let { config, sql, paramerters } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json').catch((error) => {
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json')).catch((error) => {
+            console.log("ERROR_CONFIG_FILE", error);
+        });
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json')).catch((error) => {
             console.log("ERROR_CONFIG_FILE", error);
         });
         backConfig = JSON.parse(dataConfig);
     }
     else {
         return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    const variables = sql.match(/\{\{(.*?)\}\}/g);
+    if (variables.length > 0) {
+        Object.keys(variables).forEach((key) => {
+            let variable = variables[key].replace('{{', "");
+            variable = variable.replace('}}', "");
+            let value = null;
+            if (variable.indexOf("?") > 0) {
+                const variableSplit = variable.split("?");
+                value = (typeof variableSplit[1] !== 'undefined') ? variableSplit[1] : null;
+                variable = variableSplit[0];
+            }
+            else if (typeof paramerters[variable] === "undefined") {
+                res.send(utilities.response(false, `Parameter '${variable}' is missing`));
+            }
+            if (value === null && typeof paramerters[variable] !== "undefined") {
+                value = req.body[variable];
+            }
+            sql = sql.replace(variables[key], value);
+        });
     }
     db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, sql).then((result) => {
         res.send(utilities.response(true, result));
@@ -242,7 +289,7 @@ app.post("/app/deploy", (req, res) => __awaiter(void 0, void 0, void 0, function
     const fse = require('fs-extra');
     fs.rmSync(path.resolve(user_cdn_path), { recursive: true, force: true });
     yield fse.copy(path.resolve(process.cwd(), 'dist'), path.resolve(user_cdn_service_path), { overwrite: true });
-    let dataConfig = yield fs.writeFile(path.resolve(user_cdn_service_path, 'environment.json'), JSON.stringify(config), (err) => {
+    let dataConfig = yield fs.writeFile(path.resolve(user_cdn_service_path, path.resolve(process.cwd(), 'environment.json')), JSON.stringify(config), (err) => {
         // return res.send(utilities.response(false, err));
     });
     const archiver = require('archiver');
@@ -298,8 +345,12 @@ app.post("/user/login", (req, res) => __awaiter(void 0, void 0, void 0, function
     if (config) {
         backConfig = config;
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -323,8 +374,12 @@ app.post("/user/register", (req, res) => __awaiter(void 0, void 0, void 0, funct
     if (config) {
         backConfig = config;
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -348,8 +403,12 @@ app.post("/user/exist", (req, res) => __awaiter(void 0, void 0, void 0, function
     if (config) {
         backConfig = config;
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -386,8 +445,12 @@ app.get("/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             jwt_token: jwt_token
         };
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -466,8 +529,12 @@ app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functio
             jwt_token: jwt_token
         };
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -556,8 +623,12 @@ app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     if (config) {
         backConfig = config;
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -660,8 +731,12 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
             jwt_token: jwt_token,
         };
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -726,10 +801,19 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
                 Object.keys(variables).forEach((key) => {
                     let variable = variables[key].replace('{{', "");
                     variable = variable.replace('}}', "");
-                    if (!req.query[variable]) {
+                    let value = null;
+                    if (variable.indexOf("?") > 0) {
+                        const variableSplit = variable.split("?");
+                        value = (typeof variableSplit[1] !== 'undefined') ? variableSplit[1] : null;
+                        variable = variableSplit[0];
+                    }
+                    else if (!req.query[variable]) {
                         res.send(utilities.response(false, `Parameter '${variable}' is missing`));
                     }
-                    result[0][0].action = result[0][0].action.replace(variables[key], req.query[variable]);
+                    if (value === null && req.query[variable]) {
+                        value = req.query[variable];
+                    }
+                    result[0][0].action = result[0][0].action.replace(variables[key], value);
                 });
             }
             db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, result[0][0].action).then((result) => {
@@ -744,9 +828,6 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     }), (error) => {
         res.send(utilities.response(false, error));
     });
-    // }, error => {
-    //     res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_ACCESS', error: error }));
-    // });
 }));
 /**
  * Custom API Endpoints
@@ -760,8 +841,12 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
     if (config) {
         backConfig = config;
     }
-    else if (fs.existsSync('environment.json')) {
-        let dataConfig = yield fs.readFileSync('environment.json');
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -807,10 +892,19 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 Object.keys(variables).forEach((key) => {
                     let variable = variables[key].replace('{{', "");
                     variable = variable.replace('}}', "");
-                    if (!req.body[variable]) {
+                    let value = null;
+                    if (variable.indexOf("?") > 0) {
+                        const variableSplit = variable.split("?");
+                        value = (typeof variableSplit[1] !== 'undefined') ? variableSplit[1] : null;
+                        variable = variableSplit[0];
+                    }
+                    else if (!req.body[variable]) {
                         res.send(utilities.response(false, `Parameter '${variable}' is missing`));
                     }
-                    result[0][0].action = result[0][0].action.replace(variables[key], req.body[variable]);
+                    if (value === null && req.body[variable]) {
+                        value = req.body[variable];
+                    }
+                    result[0][0].action = result[0][0].action.replace(variables[key], value);
                 });
             }
             db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, result[0][0].action).then((result) => {
@@ -831,5 +925,6 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 app.listen(PORT, () => {
     console.log(`Server Running here 👉 http://localhost:${PORT}`);
+    console.log("Temp Dir: " + os.tmpdir());
 });
 //# sourceMappingURL=index.js.map
