@@ -17,6 +17,7 @@ const util_1 = require("./system/util");
 const database_1 = require("./system/database");
 const app_1 = require("./system/app");
 const jwt_1 = require("./system/jwt");
+const link_1 = require("./system/link");
 const { exec } = require('child_process');
 const cors_1 = __importDefault(require("cors"));
 const fs = require('fs');
@@ -705,6 +706,324 @@ app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     // }, error => {
     //     res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_ACCESS', error: error }));
     // });
+}));
+/**
+ * Link API
+ * Method: GET
+ *
+ */
+app.get("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token, } = req.query;
+    let backConfig;
+    if (db_type) {
+        backConfig = {
+            db_type: db_type,
+            db_name: db_name,
+            db_host: db_host,
+            db_port: parseInt(db_port, 10),
+            db_user: db_user,
+            db_pass: db_pass,
+            over_ssh: parseInt(over_ssh),
+            ssh_host: ssh_host,
+            ssh_port: parseInt(ssh_port),
+            ssh_user: ssh_user,
+            ssh_pass: ssh_pass,
+            jwt_token: jwt_token
+        };
+    }
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    /**
+     * JWT Permission
+     */
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    const jwt = new jwt_1.JWT(backConfig.jwt_token);
+    if (typeof token === 'undefined') {
+        return res.send(utilities.response(false, {
+            code: 401,
+            error: 'Token not found!'
+        }));
+    }
+    let user_id = 0;
+    const override = jwt.override(token);
+    if (!override) {
+        const user = yield jwt.decodeToken(token).catch((error) => {
+            return res.send(utilities.response(false, error));
+        });
+        if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
+            return res.send(utilities.response(false, "Unable to find user."));
+        }
+        else {
+            user_id = user.user_id;
+        }
+    }
+    // JWT Permission
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    const { api_name, endpoint } = req.params;
+    const link = new link_1.Link();
+    link.apiRun(backConfig, PORT, 'GET', api_name, endpoint, req.query).then((data) => {
+        res.send(utilities.response(true, data));
+    }, (error) => {
+        res.send(utilities.response(false, error));
+    });
+}));
+/**
+* Link API
+* Method: POST
+*
+*/
+app.post("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { config } = req.body;
+    let backConfig;
+    if (config) {
+        backConfig = config;
+    }
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    /**
+     * JWT Permission
+     */
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    const jwt = new jwt_1.JWT(backConfig.jwt_token);
+    if (typeof token === 'undefined') {
+        return res.send(utilities.response(false, {
+            code: 401,
+            error: 'Token not found!'
+        }));
+    }
+    let user_id = 0;
+    const override = jwt.override(token);
+    if (!override) {
+        const user = yield jwt.decodeToken(token).catch((error) => {
+            return res.send(utilities.response(false, error));
+        });
+        if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
+            return res.send(utilities.response(false, "Unable to find user."));
+        }
+        else {
+            user_id = user.user_id;
+        }
+    }
+    // JWT Permission
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    const { api_name, endpoint } = req.params;
+    const link = new link_1.Link();
+    link.apiRun(config, PORT, 'POST', api_name, endpoint, req.body).then((data) => {
+        res.send(utilities.response(true, data));
+    }, (error) => {
+        res.send(utilities.response(false, error));
+    });
+}));
+/**
+* Link API
+* Method: PUT
+*
+*/
+app.put("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { config } = req.body;
+    let backConfig;
+    if (config) {
+        backConfig = config;
+    }
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    /**
+     * JWT Permission
+     */
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    const jwt = new jwt_1.JWT(backConfig.jwt_token);
+    if (typeof token === 'undefined') {
+        return res.send(utilities.response(false, {
+            code: 401,
+            error: 'Token not found!'
+        }));
+    }
+    let user_id = 0;
+    const override = jwt.override(token);
+    if (!override) {
+        const user = yield jwt.decodeToken(token).catch((error) => {
+            return res.send(utilities.response(false, error));
+        });
+        if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
+            return res.send(utilities.response(false, "Unable to find user."));
+        }
+        else {
+            user_id = user.user_id;
+        }
+    }
+    // JWT Permission
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    const { api_name, endpoint } = req.params;
+    const link = new link_1.Link();
+    link.apiRun(config, PORT, 'PUT', api_name, endpoint, req.body).then((data) => {
+        res.send(utilities.response(true, data));
+    }, (error) => {
+        res.send(utilities.response(false, error));
+    });
+}));
+/**
+* Link API
+* Method: PUT
+*
+*/
+app.patch("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { config } = req.body;
+    let backConfig;
+    if (config) {
+        backConfig = config;
+    }
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    /**
+     * JWT Permission
+     */
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    const jwt = new jwt_1.JWT(backConfig.jwt_token);
+    if (typeof token === 'undefined') {
+        return res.send(utilities.response(false, {
+            code: 401,
+            error: 'Token not found!'
+        }));
+    }
+    let user_id = 0;
+    const override = jwt.override(token);
+    if (!override) {
+        const user = yield jwt.decodeToken(token).catch((error) => {
+            return res.send(utilities.response(false, error));
+        });
+        if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
+            return res.send(utilities.response(false, "Unable to find user."));
+        }
+        else {
+            user_id = user.user_id;
+        }
+    }
+    // JWT Permission
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    const { api_name, endpoint } = req.params;
+    const link = new link_1.Link();
+    link.apiRun(config, PORT, 'PATCH', api_name, endpoint, req.body).then((data) => {
+        res.send(utilities.response(true, data));
+    }, (error) => {
+        res.send(utilities.response(false, error));
+    });
+}));
+/**
+* Link API
+* Method: DELETE
+*
+*/
+app.delete("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { config } = req.body;
+    let backConfig;
+    if (config) {
+        backConfig = config;
+    }
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    /**
+     * JWT Permission
+     */
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    const jwt = new jwt_1.JWT(backConfig.jwt_token);
+    if (typeof token === 'undefined') {
+        return res.send(utilities.response(false, {
+            code: 401,
+            error: 'Token not found!'
+        }));
+    }
+    let user_id = 0;
+    const override = jwt.override(token);
+    if (!override) {
+        const user = yield jwt.decodeToken(token).catch((error) => {
+            return res.send(utilities.response(false, error));
+        });
+        if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
+            return res.send(utilities.response(false, "Unable to find user."));
+        }
+        else {
+            user_id = user.user_id;
+        }
+    }
+    // JWT Permission
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    const { api_name, endpoint } = req.params;
+    const link = new link_1.Link();
+    link.apiRun(config, PORT, 'DELETE', api_name, endpoint, req.body).then((data) => {
+        res.send(utilities.response(true, data));
+    }, (error) => {
+        res.send(utilities.response(false, error));
+    });
 }));
 /**
  * Custom API Endpoints

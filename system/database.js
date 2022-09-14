@@ -113,6 +113,21 @@ class Database {
                     table.datetime('update_on');
                 }));
             }
+            const exist_apiLink = yield knex.schema.hasTable('_link');
+            if (!exist_apiLink) {
+                queries.push(knex.schema.createTable('_link', function (table) {
+                    table.increments();
+                    table.text('link_name');
+                    table.text('link_desc');
+                    table.text('auth_method');
+                    table.text('api_url');
+                    table.text('api_key');
+                    table.text('api_secret');
+                    table.integer('active');
+                    table.datetime('create_on');
+                    table.datetime('update_on');
+                }));
+            }
             const exist_user = yield knex.schema.hasTable('_user');
             if (!exist_user) {
                 queries.push(knex.schema.createTable('_user', function (table) {
