@@ -67,21 +67,43 @@ class JWT {
                     }
                     // Validate if user exist in our database
                     const db = new database_1.Database();
-                    const query = `SELECT * FROM _user WHERE username = '${username}'`;
-                    db.execute(config, db_port, query).then((response) => __awaiter(this, void 0, void 0, function* () {
-                        const user = response[0][0];
-                        if (user.username && (yield bcryptjs_1.default.compare(password, user.password))) {
-                            // Create token
-                            const token = (0, jsonwebtoken_1.sign)({ user_id: user.id, username }, this.JWT_TOKEN, {
-                                expiresIn: "3600h",
-                            });
-                            const utilities = new util_1.Util();
-                            const query = `UPDATE _user SET token = '${token}', update_on = '${utilities.getCurrentSqlDateTime()}' WHERE _user.id = ${user.id}`;
-                            db.execute(config, db_port, query).then((response) => {
-                                resolve(token);
-                            }, (error) => {
-                                reject(error);
-                            });
+                    const knex = db.connect_stream(config.db_type, config.db_name, config.db_host, config.db_port, config.db_user, config.db_pass);
+                    const query = knex('_user')
+                        .select('*')
+                        .where('username', username)
+                        .limit(1)
+                        .toString();
+                    // const query = `SELECT * FROM _user WHERE username = '${username}'`;
+                    db.execute(config, db_port, query).then((result) => __awaiter(this, void 0, void 0, function* () {
+                        if (config.db_type === 'mysql') {
+                            result = result[0];
+                        }
+                        if (result.length > 0) {
+                            const user = result[0];
+                            if (user.username && (yield bcryptjs_1.default.compare(password, user.password))) {
+                                // Create token
+                                const token = (0, jsonwebtoken_1.sign)({ user_id: user.id, username }, this.JWT_TOKEN, {
+                                    expiresIn: "3600h",
+                                });
+                                const utilities = new util_1.Util();
+                                const query = knex('_user')
+                                    .update({
+                                    token,
+                                    update_on: utilities.getCurrentSqlDateTime()
+                                })
+                                    .where('_user.id', user.id)
+                                    .limit(1)
+                                    .toString();
+                                // const query = `UPDATE _user SET token = '${token}', update_on = '${utilities.getCurrentSqlDateTime()}' WHERE _user.id = ${user.id}`;
+                                db.execute(config, db_port, query).then((response) => {
+                                    resolve(token);
+                                }, (error) => {
+                                    reject(error);
+                                });
+                            }
+                            else {
+                                reject('invalid credentials');
+                            }
                         }
                         else {
                             reject('invalid credentials');
@@ -116,14 +138,18 @@ class JWT {
                 // Create user in our database
                 const db = new database_1.Database();
                 const utilities = new util_1.Util();
-                const query = `INSERT INTO _user (username, password, active, create_on, update_on) VALUES ('${username}', '${encryptedPassword}', 1, '${utilities.getCurrentSqlDateTime()}', '${utilities.getCurrentSqlDateTime()}')`;
+                let query = `INSERT INTO _user (username, password, active, create_on, update_on) VALUES ('${username}', '${encryptedPassword}', 1, '${utilities.getCurrentSqlDateTime()}', '${utilities.getCurrentSqlDateTime()}')`;
+                if (config.db_type === 'mssql') {
+                    query += `; SELECT SCOPE_IDENTITY() as insertId`;
+                }
                 db.execute(config, db_port, query).then((response) => {
-                    const token = (0, jsonwebtoken_1.sign)({ user_id: response[0].insertId, username }, this.JWT_TOKEN, {
+                    let insertId = response[0].insertId;
+                    const token = (0, jsonwebtoken_1.sign)({ user_id: insertId, username }, this.JWT_TOKEN, {
                         expiresIn: "3600h",
                     });
-                    const query_update = `UPDATE _user SET token = '${token}', update_on = '${utilities.getCurrentSqlDateTime()}' WHERE _user.id = ${response[0].insertId}`;
+                    const query_update = `UPDATE _user SET token = '${token}', update_on = '${utilities.getCurrentSqlDateTime()}' WHERE _user.id = ${insertId}`;
                     db.execute(config, db_port, query_update).then((responseUserUpdate) => {
-                        resolve({ token, user_id: response[0].insertId });
+                        resolve({ token, user_id: insertId });
                     }, (error) => {
                         reject(error);
                     });

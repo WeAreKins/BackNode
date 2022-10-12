@@ -18,23 +18,38 @@ const database_1 = require("./system/database");
 const app_1 = require("./system/app");
 const jwt_1 = require("./system/jwt");
 const link_1 = require("./system/link");
-const { exec } = require('child_process');
+const mailer_1 = require("./system/mailer");
 const cors_1 = __importDefault(require("cors"));
+const { exec } = require('child_process');
 const fs = require('fs');
 const bodyParser = require('body-parser');
 const path = require('path');
 const os = require('os');
+const cron = require('node-cron');
+const util = require('util');
+var log_file = fs.createWriteStream(path.resolve(os.tmpdir(), 'backnode_debug.log'), { flags: 'w' });
+var log_stdout = process.stdout;
+process.on('uncaughtException', function (err) {
+    log_file.write(util.format(err) + '\n');
+    log_stdout.write(util.format(err) + '\n');
+    process.exit(1);
+});
+console.log = function (d) {
+    log_file.write(util.format(d) + '\n');
+    log_stdout.write(util.format(d) + '\n');
+};
 const corsOptions = {
     origin: '*',
     optionsSuccessStatus: 200,
 };
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)(corsOptions));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '120mb' }));
 const PORT = process.env.PORT || 2225;
 const utilities = new util_1.Util();
 const db = new database_1.Database();
 const application = new app_1.App();
+application.scheduleTaskInit();
 app.get("/", (req, res) => {
     res.send(utilities.response(true, "Hello BackNode!"));
 });
@@ -75,9 +90,24 @@ app.post("/app/access", (req, res) => __awaiter(void 0, void 0, void 0, function
             }
         }
         application.access(backConfig, PORT).then(success => {
-            const query = "SELECT * FROM _api LIMIT 1";
+            let query = `select version();`;
+            switch (backConfig.db_type) {
+                case 'mssql':
+                    query = `select @@VERSION as system_version`;
+                    break;
+                case 'oracle':
+                    query = `select version() as system_version`;
+                    break;
+                case 'pg':
+                    query = `select version() as system_version`;
+                    break;
+                case 'sqlite':
+                default:
+                    query = `select version() as system_version`;
+                    break;
+            }
             db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => {
-                res.send(utilities.response(true, "Access success"));
+                res.send(utilities.response(true, result));
             }, (error) => {
                 res.send(utilities.response(false, error));
             });
@@ -86,7 +116,27 @@ app.post("/app/access", (req, res) => __awaiter(void 0, void 0, void 0, function
         });
     }
     else {
-        res.send(utilities.response(true, "Access success"));
+        let query = `select version();`;
+        switch (backConfig.db_type) {
+            case 'mssql':
+                query = `select @@VERSION as system_version`;
+                break;
+            case 'oracle':
+                query = `select version() as system_version`;
+                break;
+            case 'pg':
+                query = `select version() as system_version`;
+                break;
+            case 'sqlite':
+            default:
+                query = `select version() as system_version`;
+                break;
+        }
+        db.execute(backConfig, backConfig.db_port, query).then((result) => {
+            res.send(utilities.response(true, result));
+        }, (error) => {
+            res.send(utilities.response(false, error));
+        });
     }
 }));
 app.post("/app/init", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -109,16 +159,12 @@ app.post("/app/init", (req, res) => __awaiter(void 0, void 0, void 0, function* 
     else {
         return res.send(utilities.response(false, 'app configuration not found'));
     }
-    if (backConfig.over_ssh) {
-        application.init(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port).then(success => {
-            res.send(utilities.response(true, ""));
-        }, error => {
-            res.send(utilities.response(false, error));
-        });
-    }
-    else {
+    application.scheduleTaskInit();
+    application.init(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port).then(success => {
         res.send(utilities.response(true, ""));
-    }
+    }, error => {
+        res.send(utilities.response(false, error));
+    });
 }));
 app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config } = req.body;
@@ -171,7 +217,7 @@ app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, fun
     let query = '';
     switch (backConfig.db_type) {
         case 'mssql':
-            query = `SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\' AND table_catalog = '${backConfig.db_name}'`;
+            query = `SELECT table_name FROM information_schema.tables WHERE table_catalog = '${backConfig.db_name}'`;
             break;
         case 'mysql':
             query = `SELECT table_name FROM information_schema.tables WHERE table_schema = '${backConfig.db_name}'`;
@@ -189,8 +235,22 @@ app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
     // application.access(backConfig, PORT).then(server => {
     db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => {
-        result = result[0];
-        result = result.map((row) => row.TABLE_NAME);
+        switch (backConfig.db_type) {
+            case 'mssql':
+                result = result.map((row) => row.table_name);
+                break;
+            case 'mysql':
+                result = result[0];
+                result = result.map((row) => row.TABLE_NAME);
+                break;
+            case 'oracle':
+                break;
+            case 'pg':
+                break;
+            case 'sqlite':
+            default:
+                break;
+        }
         res.send(utilities.response(true, result));
     }, (error) => {
         console.log("COLLECTION_DATA_FETCH_ERROR", error);
@@ -207,22 +267,18 @@ app.post("/app/query", (req, res) => __awaiter(void 0, void 0, void 0, function*
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json')).catch((error) => {
-            console.log("ERROR_CONFIG_FILE", error);
-        });
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json')).catch((error) => {
-            console.log("ERROR_CONFIG_FILE", error);
-        });
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
         return res.send(utilities.response(false, 'app configuration not found'));
     }
     const variables = sql.match(/\{\{(.*?)\}\}/g);
-    if (variables.length > 0) {
+    if (variables && variables.length > 0) {
         Object.keys(variables).forEach((key) => {
             let variable = variables[key].replace('{{', "");
             variable = variable.replace('}}', "");
@@ -242,6 +298,9 @@ app.post("/app/query", (req, res) => __awaiter(void 0, void 0, void 0, function*
         });
     }
     db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, sql).then((result) => {
+        if (backConfig.db_type === 'mysql') {
+            result = result[0];
+        }
         res.send(utilities.response(true, result));
     }, (error) => {
         res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error: error }));
@@ -311,34 +370,243 @@ app.post("/app/deploy", (req, res) => __awaiter(void 0, void 0, void 0, function
     archive.directory(user_cdn_service_path, false);
     archive.finalize();
 }));
-/**
- * Custom API Endpoints
- * Method: GET
- *
- */
-app.get("/cdn/:user_id/:file_name", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { user_id, file_name } = req.params;
+app.post("/app/mailer", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { config, smtp_config, from, to, subject, text, html } = req.body;
+    let backConfig;
+    if (config) {
+        backConfig = config;
+    }
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
     /**
      * JWT Permission
      */
-    // const authHeader = req.headers['authorization'];
-    // let token = authHeader && authHeader.split(' ')[1];
-    // const jwt = new JWT();
-    // if (typeof token === 'undefined') {
-    //     return res.send(utilities.response(false, {
-    //         code: 401,
-    //         error: 'Token not found!'
-    //     }));
-    // }
-    // const user: any = await jwt.decodeToken(token).catch((error: any) => {
-    //     return res.send(utilities.response(false, error));
-    // });
-    // if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-    //     return res.send(utilities.response(false, "Unable to find user."));
-    // }
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    const jwt = new jwt_1.JWT(backConfig.jwt_token);
+    if (typeof token === 'undefined') {
+        return res.send(utilities.response(false, {
+            code: 401,
+            error: 'Token not found!'
+        }));
+    }
+    let user_id = 0;
+    const override = jwt.override(token);
+    if (!override) {
+        const user = yield jwt.decodeToken(token).catch((error) => {
+            return res.send(utilities.response(false, error));
+        });
+        if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
+            return res.send(utilities.response(false, "Unable to find user."));
+        }
+        else {
+            user_id = user.user_id;
+        }
+    }
     // JWT Permission
-    const file = `${__dirname}/cdn/${user_id}/${file_name}`;
-    return res.download(file); // Set disposition and send it.
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    const mailer = new mailer_1.Mailer();
+    mailer.send(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, smtp_config, from, to, subject, text, html).then((response) => {
+        return res.send(utilities.response(true, response));
+    }, (error) => {
+        return res.send(utilities.response(false, error));
+    });
+}));
+app.post("/app/schedule/start", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { config, schedule_job } = req.body;
+    let backConfig;
+    let query = '';
+    if (config) {
+        backConfig = config;
+    }
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    /**
+     * JWT Permission
+     */
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    const jwt = new jwt_1.JWT(backConfig.jwt_token);
+    if (typeof token === 'undefined') {
+        return res.send(utilities.response(false, {
+            code: 401,
+            error: 'Token not found!'
+        }));
+    }
+    let user_id = 0;
+    const override = jwt.override(token);
+    if (!override) {
+        const user = yield jwt.decodeToken(token).catch((error) => {
+            return res.send(utilities.response(false, error));
+        });
+        if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
+            return res.send(utilities.response(false, "Unable to find user."));
+        }
+        else {
+            user_id = user.user_id;
+        }
+    }
+    // JWT Permission
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    const cronStr = `${schedule_job.minute} ${schedule_job.hour} ${schedule_job.day} ${schedule_job.month} ${schedule_job.weekday}`;
+    let job = cron.schedule(cronStr, () => {
+        application.scheduleTaskLog(schedule_job.id, null, null, utilities.getCurrentSqlDateTime(), null, null).then((schedule_id) => {
+            exec(schedule_job.command, (error, stdout, stderr) => {
+                if (error) {
+                    application.scheduleTaskLog(schedule_job.id, null, error.message, null, utilities.getCurrentSqlDateTime(), schedule_id);
+                    return;
+                }
+                if (stderr) {
+                    application.scheduleTaskLog(schedule_job.id, null, stderr, null, utilities.getCurrentSqlDateTime(), schedule_id);
+                    return;
+                }
+                application.scheduleTaskLog(schedule_job.id, stdout, null, null, utilities.getCurrentSqlDateTime(), schedule_id);
+            });
+        });
+    }, {
+        scheduled: false
+    });
+    job.start();
+    return res.send(utilities.response(true, 'schedule job started'));
+}));
+app.post("/app/schedule/stop", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { config, schedule_job } = req.body;
+    let backConfig;
+    let query = '';
+    if (config) {
+        backConfig = config;
+    }
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    /**
+     * JWT Permission
+     */
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    const jwt = new jwt_1.JWT(backConfig.jwt_token);
+    if (typeof token === 'undefined') {
+        return res.send(utilities.response(false, {
+            code: 401,
+            error: 'Token not found!'
+        }));
+    }
+    let user_id = 0;
+    const override = jwt.override(token);
+    if (!override) {
+        const user = yield jwt.decodeToken(token).catch((error) => {
+            return res.send(utilities.response(false, error));
+        });
+        if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
+            return res.send(utilities.response(false, "Unable to find user."));
+        }
+        else {
+            user_id = user.user_id;
+        }
+    }
+    // JWT Permission
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    const cronStr = `${schedule_job.minute} ${schedule_job.hour} ${schedule_job.day} ${schedule_job.month} ${schedule_job.weekday}`;
+    let job = cron.schedule(cronStr, () => { });
+    job.stop();
+    return res.send(utilities.response(true, 'schedule job stoped'));
+}));
+app.post("/app/command", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { config, command } = req.body;
+    let backConfig;
+    let query = '';
+    if (config) {
+        backConfig = config;
+    }
+    else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    /**
+     * JWT Permission
+     */
+    const authHeader = req.headers['authorization'];
+    let token = authHeader && authHeader.split(' ')[1];
+    const jwt = new jwt_1.JWT(backConfig.jwt_token);
+    if (typeof token === 'undefined') {
+        return res.send(utilities.response(false, {
+            code: 401,
+            error: 'Token not found!'
+        }));
+    }
+    let user_id = 0;
+    const override = jwt.override(token);
+    if (!override) {
+        const user = yield jwt.decodeToken(token).catch((error) => {
+            return res.send(utilities.response(false, error));
+        });
+        if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
+            return res.send(utilities.response(false, "Unable to find user."));
+        }
+        else {
+            user_id = user.user_id;
+        }
+    }
+    // JWT Permission
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            return res.send(utilities.response(true, error));
+        }
+        if (stderr) {
+            return res.send(utilities.response(true, stderr));
+        }
+        return res.send(utilities.response(true, stdout));
+    });
 }));
 app.post("/user/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config, username, password } = req.body;
@@ -420,7 +688,12 @@ app.post("/user/exist", (req, res) => __awaiter(void 0, void 0, void 0, function
             const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
         }
     }
-    const query = `SELECT id from _user WHERE username = '${username}'`;
+    // const query = `SELECT id from _user WHERE username = '${username}'`
+    const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
+    let query = knex('_user')
+        .select('id')
+        .where('username', username)
+        .toString();
     db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => {
         res.send(utilities.response(true, result));
     }, (error) => {
@@ -491,10 +764,18 @@ app.get("/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (user_id < 1) {
         return res.send(utilities.response(false, { e_title: 'ERROR_NO_USER_ID', error: 'unable to find user.' }));
     }
-    const query = `SELECT id, username, create_on FROM _user WHERE _user.id = ${user_id}`;
+    // const query = `SELECT id, username, create_on FROM _user WHERE _user.id = ${user_id}`;
+    const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
+    let query = knex('_user')
+        .select('id, username, create_on')
+        .where('_user.id', user_id)
+        .toString();
     db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => {
-        if (result[0].length > 0) {
-            res.send(utilities.response(true, result[0][0]));
+        if (backConfig.db_type === 'mysql') {
+            result = result[0];
+        }
+        if (result.length > 0) {
+            res.send(utilities.response(true, result[0]));
         }
         else {
             res.send(utilities.response(false, { e_title: 'ERROR_NO_USER', error: 'user not found' }));
@@ -512,7 +793,7 @@ app.get("/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
  *
  */
 app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { limit, offset, where, fields, db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token, } = req.query;
+    let { limit, offset, where, fields, order_by, db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token, } = req.query;
     let backConfig;
     if (db_type) {
         backConfig = {
@@ -584,33 +865,36 @@ app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functio
     // User permission check
     if (!override) {
         const permission = yield application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, user_id, '/data/' + table);
-        if (typeof permission[0][0] === 'undefined' || permission[0][0].length < 1 || permission[0][0].level < 1) {
+        if (permission.length > 0 && permission[0].level < 1) {
             return res.send(utilities.response(false, 'Unauthorised'));
         }
     }
     // User Permission
-    if (!fields) {
+    if (!fields && typeof fields === 'undefined') {
         fields = '*';
     }
-    let query = `SELECT ${fields} FROM ${table}`;
-    if (where) {
-        query += ` WHERE ${where}`;
+    const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
+    let query = knex(table).select(fields);
+    if (typeof where !== 'undefined') {
+        query.whereRaw(where);
     }
-    if (limit) {
-        query += ` LIMIT ${limit}`;
+    if (typeof limit !== 'undefined') {
+        query.limit(limit);
     }
-    if (offset) {
-        query += ` OFFSET ${offset}`;
+    if (typeof offset !== 'undefined') {
+        query.offset(offset);
     }
-    // application.access(backConfig, PORT).then(server => {
-    db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => {
-        res.send(utilities.response(true, result[0]));
+    if (typeof order_by !== 'undefined') {
+        query.orderByRaw(order_by);
+    }
+    db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query.toString()).then((result) => {
+        if (backConfig.db_type === 'mysql') {
+            result = result[0];
+        }
+        res.send(utilities.response(true, result));
     }, (error) => {
         res.send(utilities.response(false, error));
     });
-    // }, error => {
-    //     res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_ACCESS', error: error }));
-    // });
 }));
 /**
  * Retrive Data
@@ -678,7 +962,7 @@ app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     // User permission check
     if (!override) {
         const permission = yield application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, user_id, '/data/' + table);
-        if (typeof permission[0][0] === 'undefined' || permission[0][0].length < 1 || permission[0][0].level < 1) {
+        if (permission.length > 0 && permission[0].level < 1) {
             return res.send(utilities.response(false, 'Unauthorised'));
         }
     }
@@ -693,19 +977,24 @@ app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     else {
         let set_values = [];
         Object.values(set).forEach((value, idx) => {
-            set_values.push("'" + value + "'");
+            if (value === null || value === 'null') {
+                set_values.push("null");
+            }
+            else {
+                set_values.push("'" + value + "'");
+            }
         });
         query = `INSERT INTO ${table} (${Object.keys(set)}) VALUES (${set_values})`;
+        if (backConfig.db_type === 'mssql') {
+            query += `; SELECT SCOPE_IDENTITY() as insertId`;
+        }
     }
-    // application.access(backConfig, PORT).then(server => {
     db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => {
-        res.send(utilities.response(true, result[0]));
+        result = result[0];
+        res.send(utilities.response(true, result));
     }, (error) => {
         res.send(utilities.response(false, error));
     });
-    // }, error => {
-    //     res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_ACCESS', error: error }));
-    // });
 }));
 /**
  * Link API
@@ -1086,15 +1375,28 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
         }
     }
     // User permission check
-    const permission = yield application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 1, '/' + endpoint);
-    if (typeof permission[0][0] === 'undefined' || permission[0][0].length < 1 || permission[0][0].level < 2) {
+    let permission = yield application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 1, '/' + endpoint);
+    if (backConfig.db_type === 'mysql') {
+        permission = permission[0];
+    }
+    if (permission.length > 0 && permission[0].level < 2) {
         return res.send(utilities.response(false, 'Unauthorised'));
     }
-    let query = `SELECT * FROM _api WHERE endpoint = '${endpoint}' AND method = 'get'`;
+    // let query = `SELECT * FROM _api WHERE endpoint = '${endpoint}' AND method = 'get'`;
+    const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
+    let query = knex('_api')
+        .select('*')
+        .where('endpoint', endpoint)
+        .where('method', 'get')
+        .where('active', 1)
+        .toString();
     // application.access(backConfig, PORT).then(server => {
     db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => __awaiter(void 0, void 0, void 0, function* () {
-        if (result[0].length > 0) {
-            if (result[0][0].public !== 1) {
+        if (backConfig.db_type === 'mysql') {
+            result = result[0];
+        }
+        if (result.length > 0) {
+            if (result[0].public !== 1) {
                 /**
                  * JWT Permission
                  */
@@ -1115,15 +1417,16 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
                 }
                 // JWT Permission
             }
-            const variables = result[0][0].action.match(/\{\{(.*?)\}\}/g);
+            const variables = result[0].action.match(/\{\{(.*?)\}\}/g);
             if (variables && variables.length > 0) {
                 Object.keys(variables).forEach((key) => {
                     let variable = variables[key].replace('{{', "");
                     variable = variable.replace('}}', "");
+                    ;
                     let value = null;
                     if (variable.indexOf("?") > 0) {
                         const variableSplit = variable.split("?");
-                        value = (typeof variableSplit[1] !== 'undefined') ? variableSplit[1] : null;
+                        value = (typeof variableSplit[1] !== 'undefined' && variableSplit[1] !== '') ? variableSplit[1] : null;
                         variable = variableSplit[0];
                     }
                     else if (!req.query[variable]) {
@@ -1132,11 +1435,18 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
                     if (value === null && req.query[variable]) {
                         value = req.query[variable];
                     }
-                    result[0][0].action = result[0][0].action.replace(variables[key], value);
+                    else {
+                        value = '';
+                    }
+                    result[0].action = result[0].action.replace(variables[key], value);
                 });
             }
-            db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, result[0][0].action).then((result) => {
-                res.send(utilities.response(true, result[0]));
+            console.log(result[0].action);
+            db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, result[0].action).then((result) => {
+                if (backConfig.db_type === 'mysql') {
+                    result = result[0];
+                }
+                res.send(utilities.response(true, result));
             }, (error) => {
                 res.send(utilities.response(false, error));
             });
@@ -1177,15 +1487,27 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
         }
     }
     // User permission check
-    const permission = yield application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 1, '/' + endpoint);
-    if (typeof permission[0][0] === 'undefined' || permission[0][0].length < 1 || permission[0][0].level < 2) {
-        return res.send(utilities.response(false, 'Unauthorised'));
-    }
-    let query = `SELECT * FROM _api WHERE endpoint = '${endpoint}' AND method = 'post'`;
+    // let permission: any = await application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 1, '/' + endpoint);
+    // if (backConfig.db_type === 'mysql') {
+    //     permission = permission[0];
+    // }
+    // if (typeof permission[0] !== 'undefined' && permission.length > 0 && permission[0].level < 2) {
+    //     return res.send(utilities.response(false, 'Unauthorised'));
+    // }
+    // let query = `SELECT * FROM _api WHERE endpoint = '${endpoint}' AND method = 'post'`;
+    const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
+    let query = knex('_api')
+        .select('*')
+        .where('endpoint', endpoint)
+        .where('method', 'post')
+        .toString();
     // application.access(backConfig, PORT).then(server => {
     db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => __awaiter(void 0, void 0, void 0, function* () {
-        if (result[0].length > 0) {
-            if (result[0][0].public !== 1) {
+        if (backConfig.db_type === 'mysql') {
+            result = result[0];
+        }
+        if (result.length > 0) {
+            if (result[0].public !== 1) {
                 /**
                  * JWT Permission
                  */
@@ -1206,28 +1528,34 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 }
                 // JWT Permission
             }
-            const variables = result[0][0].action.match(/\{\{(.*?)\}\}/g);
-            if (variables.length > 0) {
+            const variables = result[0].action.match(/\{\{(.*?)\}\}/g);
+            if (variables && variables.length > 0) {
                 Object.keys(variables).forEach((key) => {
                     let variable = variables[key].replace('{{', "");
                     variable = variable.replace('}}', "");
                     let value = null;
                     if (variable.indexOf("?") > 0) {
                         const variableSplit = variable.split("?");
-                        value = (typeof variableSplit[1] !== 'undefined') ? variableSplit[1] : null;
+                        value = (typeof variableSplit[1] !== 'undefined' && variableSplit[1] !== '') ? variableSplit[1] : null;
                         variable = variableSplit[0];
                     }
-                    else if (!req.body[variable]) {
+                    else if (!req.query[variable]) {
                         res.send(utilities.response(false, `Parameter '${variable}' is missing`));
                     }
-                    if (value === null && req.body[variable]) {
-                        value = req.body[variable];
+                    if (value === null && req.query[variable]) {
+                        value = req.query[variable];
                     }
-                    result[0][0].action = result[0][0].action.replace(variables[key], value);
+                    else {
+                        value = '';
+                    }
+                    result[0].action = result[0].action.replace(variables[key], value);
                 });
             }
-            db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, result[0][0].action).then((result) => {
-                res.send(utilities.response(true, result[0]));
+            db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, result[0].action).then((result) => {
+                if (backConfig.db_type === 'mysql') {
+                    result = result[0];
+                }
+                res.send(utilities.response(true, result));
             }, (error) => {
                 res.send(utilities.response(false, error));
             });
@@ -1238,9 +1566,6 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
     }), (error) => {
         res.send(utilities.response(false, error));
     });
-    // }, error => {
-    //     res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_ACCESS', error: error }));
-    // });
 }));
 app.listen(PORT, () => {
     console.log(`Server Running here 👉 http://localhost:${PORT}`);
