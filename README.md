@@ -38,7 +38,7 @@ The service has two types of APIs, **GET** to retrieve data and **POST** to inse
 
 ***To access DATA APIs***, use: `server_url/data/table_name`
 
-***Example***: `http://localhost/data/users` in this case, Table name users.
+***Example***: `http://localhost:2225/data/users` in this case, Table name users.
 | Methods | Parameter | Data Type | Remarks                                                                     |
 |---------|-----------|-----------|-----------------------------------------------------------------------------|
 |      | limit     | Numeric   | Retrive data limit                                                          |
