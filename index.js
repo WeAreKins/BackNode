@@ -283,8 +283,8 @@ app.post("/app/query", (req, res) => __awaiter(void 0, void 0, void 0, function*
             let variable = variables[key].replace('{{', "");
             variable = variable.replace('}}', "");
             let value = null;
-            if (variable.indexOf("?") > 0) {
-                const variableSplit = variable.split("?");
+            if (variable.indexOf(":") > 0) {
+                const variableSplit = variable.split(":");
                 value = (typeof variableSplit[1] !== 'undefined') ? variableSplit[1] : null;
                 variable = variableSplit[0];
             }
@@ -1424,8 +1424,8 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
                     variable = variable.replace('}}', "");
                     ;
                     let value = null;
-                    if (variable.indexOf("?") > 0) {
-                        const variableSplit = variable.split("?");
+                    if (variable.indexOf(":") > 0) {
+                        const variableSplit = variable.split(":");
                         value = (typeof variableSplit[1] !== 'undefined' && variableSplit[1] !== '') ? variableSplit[1] : null;
                         variable = variableSplit[0];
                     }
@@ -1441,7 +1441,6 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
                     result[0].action = result[0].action.replace(variables[key], value);
                 });
             }
-            console.log(result[0].action);
             db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, result[0].action).then((result) => {
                 if (backConfig.db_type === 'mysql') {
                     result = result[0];
@@ -1534,8 +1533,8 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
                     let variable = variables[key].replace('{{', "");
                     variable = variable.replace('}}', "");
                     let value = null;
-                    if (variable.indexOf("?") > 0) {
-                        const variableSplit = variable.split("?");
+                    if (variable.indexOf(":") > 0) {
+                        const variableSplit = variable.split(":");
                         value = (typeof variableSplit[1] !== 'undefined' && variableSplit[1] !== '') ? variableSplit[1] : null;
                         variable = variableSplit[0];
                     }

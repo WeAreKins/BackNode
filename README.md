@@ -1,18 +1,18 @@
 # #BACK
-![](https://karippal.in/wp-content/uploads/2022/06/Screenshot-2022-06-16-at-2.52.17-PM.png)
+![](https://karippal.in/wp-content/uploads/2022/10/Screenshot-2022-10-13-at-1.32.37-PM.png)
 A ***no-code*** microservice that can ***automatically build APIs*** from your database, ***protect your APIs with JWT***, and construct Rest APIs ***without writing any code*** for the backend.
 
 The idea is to make development more pleasurable and productive. Being a full-stack developer entails being an all-rounder. This tool ***transforms a developer who is unfamiliar with backend technologies into a full-stack developer***.
 
 ##### Supported Microservice Platforms:
 - [x] NodeJS
-- [ ]  PYTHON
+- [ ] PYTHON
 - [ ] Java
 - [ ] .Net 
 
 ##### Supported Database Platforms:
 - [x] MySQL/MariaDB 
-- [ ] Microsoft SQL Server
+- [x] Microsoft SQL Server
 - [ ] PostgreSQL
 - [ ] Oracle Database
 
@@ -53,13 +53,13 @@ For custom APIs SQL is used, for example:
 
 `SELECT * FROM users WHERE id={{user_id}}`
 
-`{{user_id}}`is a dynamic parameter that can pass through a query parameter in the GET method or with a request body in the POST method.
+`user_id` is a dynamic parameter that can pass through a query parameter in the GET method or with a request body in the POST method.
 
 Optional Parameters with default value:
 
-`SELECT * FROM users WHERE id={{user_id?'sree'}}`
+`SELECT * FROM users WHERE id={{user_id?'12'}}`
 
-In case _user_id_ is not defined it automatically take dafault value _'sree'_. You can also use like `{{user_id?}}` so default value will be _null_ incase _user_id_ is not set.
+In case _user_id_ is not defined it automatically take dafault value _'12'_. You can also use like `{{user_id:}}` so default value will be _EMPTY('')_ incase _user_id_ is not set.
 
 
 ## Download the NodeJS microservice

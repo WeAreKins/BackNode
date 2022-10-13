@@ -229,6 +229,17 @@ class Database {
                     table.datetime('update_on');
                 }));
             }
+            const exist_conversation_read = yield knex.schema.hasTable('_conversation_read');
+            if (!exist_conversation_read) {
+                queries.push(knex.schema.createTable('_conversation_read', function (table) {
+                    table.increments();
+                    table.integer('conversation_id');
+                    table.integer('user_id');
+                    table.integer('active');
+                    table.datetime('create_on');
+                    table.datetime('update_on');
+                }));
+            }
             const exist_conversation_tag = yield knex.schema.hasTable('_conversation_tag');
             if (!exist_conversation_tag) {
                 queries.push(knex.schema.createTable('_conversation_tag', function (table) {
