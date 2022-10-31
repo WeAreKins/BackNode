@@ -44,6 +44,12 @@ class App {
                         // throw err;
                     }
                     resolve(server);
+                    /**
+                     * Do Not Remove this code, the application will close unexpcted on connectivity issue.
+                     */
+                    server.on('error', function (err) {
+                        console.error('ERROR_ACCESS_TUNNEL_SERVER:', err);
+                    });
                 });
             }
             catch (err) {

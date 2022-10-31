@@ -57,7 +57,7 @@ For custom APIs SQL is used, for example:
 
 Optional Parameters with default value:
 
-`SELECT * FROM users WHERE id={{user_id?'12'}}`
+`SELECT * FROM users WHERE id={{user_id:'12'}}`
 
 In case _user_id_ is not defined it automatically take dafault value _'12'_. You can also use like `{{user_id:}}` so default value will be _EMPTY('')_ incase _user_id_ is not set.
 
