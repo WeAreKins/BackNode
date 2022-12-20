@@ -44,7 +44,7 @@ class Database {
                     });
                 }
                 catch (con_stream_error) {
-                    console.log("EXECUTE_CONSTREAM_ERROR", con_stream_error);
+                    console.log('EXECUTE_CONSTREAM_ERROR', con_stream_error);
                 }
                 break;
             case 'mssql':
@@ -61,7 +61,7 @@ class Database {
                     });
                 }
                 catch (con_stream_error) {
-                    console.log("EXECUTE_CONSTREAM_ERROR", con_stream_error);
+                    console.log('EXECUTE_CONSTREAM_ERROR', con_stream_error);
                 }
                 break;
             case 'pg':
@@ -115,7 +115,7 @@ class Database {
             }
             const exist_apiLink = yield knex.schema.hasTable('_link');
             if (!exist_apiLink) {
-                queries.push(knex.schema.createTable('_link', function (table) {
+                queries.push(knex.schema.createTable('_link', (table) => {
                     table.increments();
                     table.text('link_name');
                     table.text('link_desc');
@@ -123,14 +123,23 @@ class Database {
                     table.text('api_url');
                     table.text('api_key');
                     table.text('api_secret');
+                    table.text('oauth2_config');
                     table.integer('active');
                     table.datetime('create_on');
                     table.datetime('update_on');
                 }));
             }
+            else {
+                const existApiLinkAuth2ConfigColumn = yield knex.schema.hasColumn('_link', 'oauth2_config');
+                if (!existApiLinkAuth2ConfigColumn) {
+                    queries.push(knex.schema.alterTable('_link', (table) => {
+                        table.text('oauth2_config');
+                    }));
+                }
+            }
             const exist_user = yield knex.schema.hasTable('_user');
             if (!exist_user) {
-                queries.push(knex.schema.createTable('_user', function (table) {
+                queries.push(knex.schema.createTable('_user', (table) => {
                     table.increments();
                     table.text('username');
                     table.text('password');
@@ -261,12 +270,12 @@ class Database {
                 }));
             }
             if (queries.length > 0) {
-                const multiQuery = queries.join(";");
+                const multiQuery = queries.join(';');
                 knex.raw(multiQuery).then((results) => {
                     knex.destroy();
                     resolve(results[0]);
                 }).catch((error) => {
-                    console.log("COLLECTION_INIT_DB_ERROR", error);
+                    console.log('COLLECTION_INIT_DB_ERROR', error);
                     knex.destroy();
                     reject(error);
                 });
@@ -286,7 +295,7 @@ class Database {
                 knex.destroy();
                 resolve(results[0]);
             }).catch((error) => {
-                console.log("CREATE_USER_DB_ERROR", error);
+                console.log('CREATE_USER_DB_ERROR', error);
                 knex.destroy();
                 reject(error);
             });
@@ -302,7 +311,7 @@ class Database {
                 knex.destroy();
                 resolve(results[0]);
             }).catch((error) => {
-                console.log("GET_CONFIG_ERROR", error);
+                console.log('GET_CONFIG_ERROR', error);
                 knex.destroy();
                 reject(error);
             });

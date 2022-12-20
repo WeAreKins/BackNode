@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/* eslint-disable @typescript-eslint/naming-convention */
 const express_1 = __importDefault(require("express"));
 const util_1 = require("./system/util");
 const database_1 = require("./system/database");
@@ -27,14 +28,14 @@ const path = require('path');
 const os = require('os');
 const cron = require('node-cron');
 const util = require('util');
-var log_file = fs.createWriteStream(path.resolve(os.tmpdir(), 'backnode_debug.log'), { flags: 'w' });
-var log_stdout = process.stdout;
-process.on('uncaughtException', function (err) {
+const log_file = fs.createWriteStream(path.resolve(os.tmpdir(), 'backnode_debug.log'), { flags: 'w' });
+const log_stdout = process.stdout;
+process.on('uncaughtException', (err) => {
     log_file.write(util.format(err) + '\n');
     log_stdout.write(util.format(err) + '\n');
     process.exit(1);
 });
-console.log = function (d) {
+console.log = (d) => {
     log_file.write(util.format(d) + '\n');
     log_stdout.write(util.format(d) + '\n');
 };
@@ -50,10 +51,10 @@ const utilities = new util_1.Util();
 const db = new database_1.Database();
 const application = new app_1.App();
 application.scheduleTaskInit();
-app.get("/", (req, res) => {
-    res.send(utilities.response(true, "Hello BackNode!"));
+app.get('/', (req, res) => {
+    res.send(utilities.response(true, 'Hello BackNode!'));
 });
-app.post("/", (req, res) => {
+app.post('/', (req, res) => {
     res.send(utilities.response(true, {
         os: os.platform(),
         release: os.release(),
@@ -62,19 +63,19 @@ app.post("/", (req, res) => {
         type: os.type()
     }));
 });
-app.post("/app/access", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/app/access', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config } = req.body;
     let backConfig;
-    let envPath = null;
+    const envPath = null;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -139,7 +140,7 @@ app.post("/app/access", (req, res) => __awaiter(void 0, void 0, void 0, function
         });
     }
 }));
-app.post("/app/init", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/app/init', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config, local_env } = req.body;
     let backConfig;
     if (config) {
@@ -149,11 +150,11 @@ app.post("/app/init", (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -161,23 +162,23 @@ app.post("/app/init", (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
     application.scheduleTaskInit();
     application.init(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port).then(success => {
-        res.send(utilities.response(true, ""));
+        res.send(utilities.response(true, ''));
     }, error => {
         res.send(utilities.response(false, error));
     });
 }));
-app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/app/collections', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -186,8 +187,8 @@ app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, fun
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -198,11 +199,9 @@ app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, fun
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -253,25 +252,25 @@ app.post("/app/collections", (req, res) => __awaiter(void 0, void 0, void 0, fun
         }
         res.send(utilities.response(true, result));
     }, (error) => {
-        console.log("COLLECTION_DATA_FETCH_ERROR", error);
-        res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error: error }));
+        console.log('COLLECTION_DATA_FETCH_ERROR', error);
+        res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error }));
     });
     // }, error => {
     //     res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_ACCESS', error: error }));
     // });
 }));
-app.post("/app/query", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/app/query', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { config, sql, paramerters } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -280,18 +279,18 @@ app.post("/app/query", (req, res) => __awaiter(void 0, void 0, void 0, function*
     const variables = sql.match(/\{\{(.*?)\}\}/g);
     if (variables && variables.length > 0) {
         Object.keys(variables).forEach((key) => {
-            let variable = variables[key].replace('{{', "");
-            variable = variable.replace('}}', "");
+            let variable = variables[key].replace('{{', '');
+            variable = variable.replace('}}', '');
             let value = null;
-            if (variable.indexOf(":") > 0) {
-                const variableSplit = variable.split(":");
+            if (variable.indexOf(':') > 0) {
+                const variableSplit = variable.split(':');
                 value = (typeof variableSplit[1] !== 'undefined') ? variableSplit[1] : null;
                 variable = variableSplit[0];
             }
-            else if (typeof paramerters[variable] === "undefined") {
+            else if (typeof paramerters[variable] === 'undefined') {
                 res.send(utilities.response(false, `Parameter '${variable}' is missing`));
             }
-            if (value === null && typeof paramerters[variable] !== "undefined") {
+            if (value === null && typeof paramerters[variable] !== 'undefined') {
                 value = req.body[variable];
             }
             sql = sql.replace(variables[key], value);
@@ -303,19 +302,19 @@ app.post("/app/query", (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         res.send(utilities.response(true, result));
     }, (error) => {
-        res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error: error }));
+        res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error }));
     });
 }));
-app.post("/app/deploy", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/app/deploy', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config } = req.body;
     if (!config) {
         return res.send(utilities.response(false, 'config not found'));
     }
     /**
-    * JWT Permission
-    */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+     * JWT Permission
+     */
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(config.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -326,11 +325,9 @@ app.post("/app/deploy", (req, res) => __awaiter(void 0, void 0, void 0, function
     let user_id = 0;
     const override = yield jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -349,7 +346,7 @@ app.post("/app/deploy", (req, res) => __awaiter(void 0, void 0, void 0, function
     const fse = require('fs-extra');
     fs.rmSync(path.resolve(user_cdn_path), { recursive: true, force: true });
     yield fse.copy(path.resolve(process.cwd(), 'dist'), path.resolve(user_cdn_service_path), { overwrite: true });
-    let dataConfig = yield fs.writeFile(path.resolve(user_cdn_service_path, path.resolve(process.cwd(), 'environment.json')), JSON.stringify(config), (err) => {
+    const dataConfig = yield fs.writeFile(path.resolve(user_cdn_service_path, path.resolve(process.cwd(), 'environment.json')), JSON.stringify(config), (err) => {
         // return res.send(utilities.response(false, err));
     });
     const archiver = require('archiver');
@@ -370,18 +367,18 @@ app.post("/app/deploy", (req, res) => __awaiter(void 0, void 0, void 0, function
     archive.directory(user_cdn_service_path, false);
     archive.finalize();
 }));
-app.post("/app/mailer", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/app/mailer', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config, smtp_config, from, to, subject, text, html } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -390,8 +387,8 @@ app.post("/app/mailer", (req, res) => __awaiter(void 0, void 0, void 0, function
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -402,11 +399,9 @@ app.post("/app/mailer", (req, res) => __awaiter(void 0, void 0, void 0, function
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -419,25 +414,21 @@ app.post("/app/mailer", (req, res) => __awaiter(void 0, void 0, void 0, function
         }
     }
     const mailer = new mailer_1.Mailer();
-    mailer.send(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, smtp_config, from, to, subject, text, html).then((response) => {
-        return res.send(utilities.response(true, response));
-    }, (error) => {
-        return res.send(utilities.response(false, error));
-    });
+    mailer.send(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, smtp_config, from, to, subject, text, html).then((response) => res.send(utilities.response(true, response)), (error) => res.send(utilities.response(false, error)));
 }));
-app.post("/app/schedule/start", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { config, schedule_job } = req.body;
+app.post('/app/schedule/start', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { config, schedule_job } = req.body;
     let backConfig;
-    let query = '';
+    const query = '';
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -446,8 +437,8 @@ app.post("/app/schedule/start", (req, res) => __awaiter(void 0, void 0, void 0, 
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -458,11 +449,9 @@ app.post("/app/schedule/start", (req, res) => __awaiter(void 0, void 0, void 0, 
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -475,7 +464,7 @@ app.post("/app/schedule/start", (req, res) => __awaiter(void 0, void 0, void 0, 
         }
     }
     const cronStr = `${schedule_job.minute} ${schedule_job.hour} ${schedule_job.day} ${schedule_job.month} ${schedule_job.weekday}`;
-    let job = cron.schedule(cronStr, () => {
+    const job = cron.schedule(cronStr, () => {
         application.scheduleTaskLog(schedule_job.id, null, null, utilities.getCurrentSqlDateTime(), null, null).then((schedule_id) => {
             exec(schedule_job.command, (error, stdout, stderr) => {
                 if (error) {
@@ -495,19 +484,19 @@ app.post("/app/schedule/start", (req, res) => __awaiter(void 0, void 0, void 0, 
     job.start();
     return res.send(utilities.response(true, 'schedule job started'));
 }));
-app.post("/app/schedule/stop", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { config, schedule_job } = req.body;
+app.post('/app/schedule/stop', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { config, schedule_job } = req.body;
     let backConfig;
-    let query = '';
+    const query = '';
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -516,8 +505,8 @@ app.post("/app/schedule/stop", (req, res) => __awaiter(void 0, void 0, void 0, f
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -528,11 +517,9 @@ app.post("/app/schedule/stop", (req, res) => __awaiter(void 0, void 0, void 0, f
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -545,23 +532,23 @@ app.post("/app/schedule/stop", (req, res) => __awaiter(void 0, void 0, void 0, f
         }
     }
     const cronStr = `${schedule_job.minute} ${schedule_job.hour} ${schedule_job.day} ${schedule_job.month} ${schedule_job.weekday}`;
-    let job = cron.schedule(cronStr, () => { });
+    const job = cron.schedule(cronStr, () => { });
     job.stop();
     return res.send(utilities.response(true, 'schedule job stoped'));
 }));
-app.post("/app/command", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { config, command } = req.body;
+app.post('/app/command', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { config, command } = req.body;
     let backConfig;
-    let query = '';
+    const query = '';
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -570,8 +557,8 @@ app.post("/app/command", (req, res) => __awaiter(void 0, void 0, void 0, functio
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -582,11 +569,9 @@ app.post("/app/command", (req, res) => __awaiter(void 0, void 0, void 0, functio
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -608,18 +593,18 @@ app.post("/app/command", (req, res) => __awaiter(void 0, void 0, void 0, functio
         return res.send(utilities.response(true, stdout));
     });
 }));
-app.post("/user/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/user/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config, username, password } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -631,24 +616,20 @@ app.post("/user/login", (req, res) => __awaiter(void 0, void 0, void 0, function
         }
     }
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
-    jwt.login(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, username, password).then((response) => {
-        return res.send(utilities.response(true, response));
-    }, (error) => {
-        return res.send(utilities.response(false, error));
-    });
+    jwt.login(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, username, password).then((response) => res.send(utilities.response(true, response)), (error) => res.send(utilities.response(false, error)));
 }));
-app.post("/user/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/user/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config, username, password } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -660,24 +641,20 @@ app.post("/user/register", (req, res) => __awaiter(void 0, void 0, void 0, funct
         }
     }
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
-    jwt.register(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, username, password).then((response) => {
-        return res.send(utilities.response(true, response));
-    }, (error) => {
-        return res.send(utilities.response(false, error));
-    });
+    jwt.register(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, username, password).then((response) => res.send(utilities.response(true, response)), (error) => res.send(utilities.response(false, error)));
 }));
-app.post("/user/exist", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/user/exist', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { config, username } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -690,18 +667,18 @@ app.post("/user/exist", (req, res) => __awaiter(void 0, void 0, void 0, function
     }
     // const query = `SELECT id from _user WHERE username = '${username}'`
     const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
-    let query = knex('_user')
+    const query = knex('_user')
         .select('id')
         .where('username', username)
         .toString();
     db.execute(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, query).then((result) => {
         res.send(utilities.response(true, result));
     }, (error) => {
-        res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error: error }));
+        res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error }));
     });
 }));
-app.get("/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token } = req.query;
+app.get('/user', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token } = req.query;
     let backConfig;
     if (db_type) {
         backConfig = {
@@ -711,30 +688,30 @@ app.get("/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             db_port: parseInt(db_port, 10),
             db_user: db_user,
             db_pass: db_pass,
-            over_ssh: parseInt(over_ssh),
+            over_ssh: parseInt(over_ssh, 10),
             ssh_host: ssh_host,
-            ssh_port: parseInt(ssh_port),
+            ssh_port: parseInt(ssh_port, 10),
             ssh_user: ssh_user,
             ssh_pass: ssh_pass,
             jwt_token: jwt_token
         };
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
         return res.send(utilities.response(false, 'app configuration not found'));
     }
     /**
-    * JWT Permission
-    */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+     * JWT Permission
+     */
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -745,11 +722,9 @@ app.get("/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let user_id = 0;
     const override = yield jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -766,7 +741,7 @@ app.get("/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     // const query = `SELECT id, username, create_on FROM _user WHERE _user.id = ${user_id}`;
     const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
-    let query = knex('_user')
+    const query = knex('_user')
         .select('id, username, create_on')
         .where('_user.id', user_id)
         .toString();
@@ -781,7 +756,7 @@ app.get("/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.send(utilities.response(false, { e_title: 'ERROR_NO_USER', error: 'user not found' }));
         }
     }, (error) => {
-        res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error: error }));
+        res.send(utilities.response(false, { e_title: 'ERROR_BACK_APP_DB', error }));
     });
 }));
 /**
@@ -792,7 +767,7 @@ app.get("/user", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
  * @where: key =|!=|>|<|>=|<= value AND|OR key =|!=|>|<|>=|<= value
  *
  */
-app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get('/data/:table?', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { limit, offset, where, fields, order_by, db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token, } = req.query;
     let backConfig;
     if (db_type) {
@@ -803,20 +778,20 @@ app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functio
             db_port: parseInt(db_port, 10),
             db_user: db_user,
             db_pass: db_pass,
-            over_ssh: parseInt(over_ssh),
+            over_ssh: parseInt(over_ssh, 10),
             ssh_host: ssh_host,
-            ssh_port: parseInt(ssh_port),
+            ssh_port: parseInt(ssh_port, 10),
             ssh_user: ssh_user,
             ssh_pass: ssh_pass,
             jwt_token: jwt_token
         };
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -825,8 +800,8 @@ app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functio
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -837,11 +812,9 @@ app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functio
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -851,9 +824,9 @@ app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functio
     const { table } = req.params;
     if (!table) {
         return res.send(utilities.response(false, {
-            title: "Collection (Table) not defined",
+            title: 'Collection (Table) not defined',
             error: {
-                help: "Use table name after data eg: http://localhost/data/{table_name}"
+                help: 'Use table name after data eg: http://localhost/data/{table_name}'
             }
         }));
     }
@@ -864,7 +837,8 @@ app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
     // User permission check
     if (!override) {
-        const permission = yield application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, user_id, '/data/' + table);
+        const permission = yield application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT :
+            backConfig.db_port, user_id, '/data/' + table);
         if (permission.length > 0 && permission[0].level < 1) {
             return res.send(utilities.response(false, 'Unauthorised'));
         }
@@ -874,7 +848,7 @@ app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functio
         fields = '*';
     }
     const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
-    let query = knex(table).select(fields);
+    const query = knex(table).select(fields);
     if (typeof where !== 'undefined') {
         query.whereRaw(where);
     }
@@ -898,22 +872,23 @@ app.get("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functio
 }));
 /**
  * Retrive Data
+ *
  * @set = { table column name: value}
  *
  */
-app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { set, where, config } = req.body;
+app.post('/data/:table?', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { set, where, config } = req.body;
     let backConfig;
     let query = '';
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -922,8 +897,8 @@ app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -934,11 +909,9 @@ app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -948,9 +921,9 @@ app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     const { table } = req.params;
     if (!table) {
         res.send(utilities.response(false, {
-            title: "Collection (Table) not defined",
+            title: 'Collection (Table) not defined',
             error: {
-                help: "Use table name after data eg: http://localhost/data/{table_name}"
+                help: 'Use table name after data eg: http://localhost/data/{table_name}'
             }
         }));
     }
@@ -961,27 +934,33 @@ app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
     // User permission check
     if (!override) {
-        const permission = yield application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, user_id, '/data/' + table);
+        const permission = yield application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT :
+            backConfig.db_port, user_id, '/data/' + table);
         if (permission.length > 0 && permission[0].level < 1) {
             return res.send(utilities.response(false, 'Unauthorised'));
         }
     }
     // User Permission
     if (where) {
-        let set_fields = [];
+        const set_fields = [];
         Object.keys(set).forEach((key) => {
-            set_fields.push(key + " = '" + set[key] + "'");
+            if (set[key] === null || set[key] === 'null') {
+                set_fields.push(key + ' = null');
+            }
+            else {
+                set_fields.push(key + ' = \'' + set[key] + '\'');
+            }
         });
         query = `UPDATE ${table} SET ${set_fields} WHERE ${where}`;
     }
     else {
-        let set_values = [];
+        const set_values = [];
         Object.values(set).forEach((value, idx) => {
             if (value === null || value === 'null') {
-                set_values.push("null");
+                set_values.push('null');
             }
             else {
-                set_values.push("'" + value + "'");
+                set_values.push('\'' + value + '\'');
             }
         });
         query = `INSERT INTO ${table} (${Object.keys(set)}) VALUES (${set_values})`;
@@ -998,11 +977,49 @@ app.post("/data/:table?", (req, res) => __awaiter(void 0, void 0, void 0, functi
 }));
 /**
  * Link API
+ * Auth2 Authorization Callback and request Access Token
+ * This is a public url
+ */
+app.get('/link/:api_name/oauth2/callback', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let backConfig;
+    if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        backConfig = JSON.parse(dataConfig);
+    }
+    else {
+        return res.send(utilities.response(false, 'app configuration not found'));
+    }
+    if (application.sshTunnel === null) {
+        if (backConfig.over_ssh) {
+            yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
+        }
+    }
+    const { code } = req.query;
+    const { api_name } = req.params;
+    const link = new link_1.Link();
+    link.getAuth2AccessToken(backConfig, PORT, api_name, code).then((data) => {
+        res.send(`
+        <h3>Authorization Success<\h3>
+        <p>Please goto to #Back Application and you can close this window.<\p>
+        `);
+    }, (error) => {
+        res.send(`
+        <h3>Oops! Authorization failed<\h3>
+        <p>${error}<\p>
+        `);
+    });
+}));
+/**
+ * Link API
  * Method: GET
  *
  */
-app.get("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token, } = req.query;
+app.get('/link/:api_name/:endpoint(*)?', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token, } = req.query;
     let backConfig;
     if (db_type) {
         backConfig = {
@@ -1012,20 +1029,20 @@ app.get("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0,
             db_port: parseInt(db_port, 10),
             db_user: db_user,
             db_pass: db_pass,
-            over_ssh: parseInt(over_ssh),
+            over_ssh: parseInt(over_ssh, 10),
             ssh_host: ssh_host,
-            ssh_port: parseInt(ssh_port),
+            ssh_port: parseInt(ssh_port, 10),
             ssh_user: ssh_user,
             ssh_pass: ssh_pass,
             jwt_token: jwt_token
         };
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -1034,8 +1051,8 @@ app.get("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0,
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -1046,11 +1063,9 @@ app.get("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0,
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -1064,29 +1079,29 @@ app.get("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0,
     }
     const { api_name, endpoint } = req.params;
     const link = new link_1.Link();
-    link.apiRun(backConfig, PORT, 'GET', api_name, endpoint, req.query).then((data) => {
+    link.apiRun(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'GET', api_name, endpoint, req.query).then((data) => {
         res.send(utilities.response(true, data));
     }, (error) => {
         res.send(utilities.response(false, error));
     });
 }));
 /**
-* Link API
-* Method: POST
-*
-*/
-app.post("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { config } = req.body;
+ * Link API
+ * Method: POST
+ *
+ */
+app.post('/link/:api_name/:endpoint(*)?', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { config } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -1095,8 +1110,8 @@ app.post("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -1107,11 +1122,9 @@ app.post("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -1125,29 +1138,29 @@ app.post("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0
     }
     const { api_name, endpoint } = req.params;
     const link = new link_1.Link();
-    link.apiRun(config, PORT, 'POST', api_name, endpoint, req.body).then((data) => {
+    link.apiRun(config, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'POST', api_name, endpoint, null, req.body).then((data) => {
         res.send(utilities.response(true, data));
     }, (error) => {
         res.send(utilities.response(false, error));
     });
 }));
 /**
-* Link API
-* Method: PUT
-*
-*/
-app.put("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { config } = req.body;
+ * Link API
+ * Method: PUT
+ *
+ */
+app.put('/link/:api_name/:endpoint(*)?', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { config } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -1156,8 +1169,8 @@ app.put("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0,
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -1168,11 +1181,9 @@ app.put("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0,
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -1186,29 +1197,29 @@ app.put("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0,
     }
     const { api_name, endpoint } = req.params;
     const link = new link_1.Link();
-    link.apiRun(config, PORT, 'PUT', api_name, endpoint, req.body).then((data) => {
+    link.apiRun(config, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'PUT', api_name, endpoint, null, req.body).then((data) => {
         res.send(utilities.response(true, data));
     }, (error) => {
         res.send(utilities.response(false, error));
     });
 }));
 /**
-* Link API
-* Method: PUT
-*
-*/
-app.patch("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { config } = req.body;
+ * Link API
+ * Method: PUT
+ *
+ */
+app.patch('/link/:api_name/:endpoint(*)?', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { config } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -1217,8 +1228,8 @@ app.patch("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -1229,11 +1240,9 @@ app.patch("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -1247,29 +1256,29 @@ app.patch("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 
     }
     const { api_name, endpoint } = req.params;
     const link = new link_1.Link();
-    link.apiRun(config, PORT, 'PATCH', api_name, endpoint, req.body).then((data) => {
+    link.apiRun(config, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'PATCH', api_name, endpoint, null, req.body).then((data) => {
         res.send(utilities.response(true, data));
     }, (error) => {
         res.send(utilities.response(false, error));
     });
 }));
 /**
-* Link API
-* Method: DELETE
-*
-*/
-app.delete("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { config } = req.body;
+ * Link API
+ * Method: DELETE
+ *
+ */
+app.delete('/link/:api_name/:endpoint(*)?', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { config } = req.body;
     let backConfig;
     if (config) {
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -1278,8 +1287,8 @@ app.delete("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -1290,11 +1299,9 @@ app.delete("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void
     let user_id = 0;
     const override = jwt.override(token);
     if (!override) {
-        const user = yield jwt.decodeToken(token).catch((error) => {
-            return res.send(utilities.response(false, error));
-        });
+        const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
         if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-            return res.send(utilities.response(false, "Unable to find user."));
+            return res.send(utilities.response(false, 'Unable to find user.'));
         }
         else {
             user_id = user.user_id;
@@ -1308,7 +1315,7 @@ app.delete("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void
     }
     const { api_name, endpoint } = req.params;
     const link = new link_1.Link();
-    link.apiRun(config, PORT, 'DELETE', api_name, endpoint, req.body).then((data) => {
+    link.apiRun(config, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'DELETE', api_name, endpoint, null, req.body).then((data) => {
         res.send(utilities.response(true, data));
     }, (error) => {
         res.send(utilities.response(false, error));
@@ -1319,9 +1326,9 @@ app.delete("/link/:api_name/:endpoint(*)?", (req, res) => __awaiter(void 0, void
  * Method: GET
  *
  */
-app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get('/:endpoint(*)?', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { endpoint } = req.params;
-    let { db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token } = req.query;
+    const { db_type, db_name, db_host, db_port, db_user, db_pass, over_ssh, ssh_host, ssh_port, ssh_user, ssh_pass, jwt_token } = req.query;
     let backConfig;
     if (db_type) {
         backConfig = {
@@ -1331,20 +1338,20 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
             db_port: parseInt(db_port, 10),
             db_user: db_user,
             db_pass: db_pass,
-            over_ssh: parseInt(over_ssh),
+            over_ssh: parseInt(over_ssh, 10),
             ssh_host: ssh_host,
-            ssh_port: parseInt(ssh_port),
+            ssh_port: parseInt(ssh_port, 10),
             ssh_user: ssh_user,
             ssh_pass: ssh_pass,
             jwt_token: jwt_token,
         };
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -1353,8 +1360,8 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     /**
      * JWT Permission
      */
-    const authHeader = req.headers['authorization'];
-    let token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     const jwt = new jwt_1.JWT(backConfig.jwt_token);
     if (typeof token === 'undefined') {
         return res.send(utilities.response(false, {
@@ -1362,11 +1369,9 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
             error: 'Token not found!'
         }));
     }
-    const user = yield jwt.decodeToken(token).catch((error) => {
-        return res.send(utilities.response(false, error));
-    });
+    const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
     if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-        return res.send(utilities.response(false, "Unable to find user."));
+        return res.send(utilities.response(false, 'Unable to find user.'));
     }
     // JWT Permission
     if (application.sshTunnel === null) {
@@ -1384,7 +1389,7 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
     // let query = `SELECT * FROM _api WHERE endpoint = '${endpoint}' AND method = 'get'`;
     const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
-    let query = knex('_api')
+    const query = knex('_api')
         .select('*')
         .where('endpoint', endpoint)
         .where('method', 'get')
@@ -1400,8 +1405,8 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
                 /**
                  * JWT Permission
                  */
-                const authHeader = req.headers['authorization'];
-                let token = authHeader && authHeader.split(' ')[1];
+                const authHeader = req.headers.authorization;
+                const token = authHeader && authHeader.split(' ')[1];
                 const jwt = new jwt_1.JWT(backConfig.jwt_token);
                 if (typeof token === 'undefined') {
                     return res.send(utilities.response(false, {
@@ -1409,23 +1414,21 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
                         error: 'Token not found!'
                     }));
                 }
-                const user = yield jwt.decodeToken(token).catch((error) => {
-                    return res.send(utilities.response(false, error));
-                });
+                const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
                 if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-                    return res.send(utilities.response(false, "Unable to find user."));
+                    return res.send(utilities.response(false, 'Unable to find user.'));
                 }
                 // JWT Permission
             }
             const variables = result[0].action.match(/\{\{(.*?)\}\}/g);
             if (variables && variables.length > 0) {
                 Object.keys(variables).forEach((key) => {
-                    let variable = variables[key].replace('{{', "");
-                    variable = variable.replace('}}', "");
+                    let variable = variables[key].replace('{{', '');
+                    variable = variable.replace('}}', '');
                     ;
                     let value = null;
-                    if (variable.indexOf(":") > 0) {
-                        const variableSplit = variable.split(":");
+                    if (variable.indexOf(':') > 0) {
+                        const variableSplit = variable.split(':');
                         value = (typeof variableSplit[1] !== 'undefined' && variableSplit[1] !== '') ? variableSplit[1] : null;
                         variable = variableSplit[0];
                     }
@@ -1451,7 +1454,7 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
             });
         }
         else {
-            res.send(utilities.response(false, "API endpoint not found!"));
+            res.send(utilities.response(false, 'API endpoint not found!'));
         }
     }), (error) => {
         res.send(utilities.response(false, error));
@@ -1462,7 +1465,7 @@ app.get("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, functi
  * Method: POST
  *
  */
-app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/:endpoint(*)?', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { endpoint } = req.params;
     const { config } = req.body;
     let backConfig;
@@ -1470,11 +1473,11 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
         backConfig = config;
     }
     else if (fs.existsSync(path.resolve(process.cwd(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(process.cwd(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else if (fs.existsSync(path.resolve(os.tmpdir(), 'environment.json'))) {
-        let dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
+        const dataConfig = yield fs.readFileSync(path.resolve(os.tmpdir(), 'environment.json'));
         backConfig = JSON.parse(dataConfig);
     }
     else {
@@ -1485,17 +1488,8 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
             const success = yield application.access(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port);
         }
     }
-    // User permission check
-    // let permission: any = await application.userPermissions(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 1, '/' + endpoint);
-    // if (backConfig.db_type === 'mysql') {
-    //     permission = permission[0];
-    // }
-    // if (typeof permission[0] !== 'undefined' && permission.length > 0 && permission[0].level < 2) {
-    //     return res.send(utilities.response(false, 'Unauthorised'));
-    // }
-    // let query = `SELECT * FROM _api WHERE endpoint = '${endpoint}' AND method = 'post'`;
     const knex = db.connect_stream(backConfig.db_type, backConfig.db_name, backConfig.db_host, backConfig.db_port, backConfig.db_user, backConfig.db_pass);
-    let query = knex('_api')
+    const query = knex('_api')
         .select('*')
         .where('endpoint', endpoint)
         .where('method', 'post')
@@ -1510,8 +1504,8 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 /**
                  * JWT Permission
                  */
-                const authHeader = req.headers['authorization'];
-                let token = authHeader && authHeader.split(' ')[1];
+                const authHeader = req.headers.authorization;
+                const token = authHeader && authHeader.split(' ')[1];
                 const jwt = new jwt_1.JWT(backConfig.jwt_token);
                 if (typeof token === 'undefined') {
                     return res.send(utilities.response(false, {
@@ -1519,22 +1513,20 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
                         error: 'Token not found!'
                     }));
                 }
-                const user = yield jwt.decodeToken(token).catch((error) => {
-                    return res.send(utilities.response(false, error));
-                });
+                const user = yield jwt.decodeToken(token).catch((error) => res.send(utilities.response(false, error)));
                 if (typeof user === 'undefined' || typeof user.user_id === 'undefined') {
-                    return res.send(utilities.response(false, "Unable to find user."));
+                    return res.send(utilities.response(false, 'Unable to find user.'));
                 }
                 // JWT Permission
             }
             const variables = result[0].action.match(/\{\{(.*?)\}\}/g);
             if (variables && variables.length > 0) {
                 Object.keys(variables).forEach((key) => {
-                    let variable = variables[key].replace('{{', "");
-                    variable = variable.replace('}}', "");
+                    let variable = variables[key].replace('{{', '');
+                    variable = variable.replace('}}', '');
                     let value = null;
-                    if (variable.indexOf(":") > 0) {
-                        const variableSplit = variable.split(":");
+                    if (variable.indexOf(':') > 0) {
+                        const variableSplit = variable.split(':');
                         value = (typeof variableSplit[1] !== 'undefined' && variableSplit[1] !== '') ? variableSplit[1] : null;
                         variable = variableSplit[0];
                     }
@@ -1560,7 +1552,7 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
             });
         }
         else {
-            res.send(utilities.response(false, "API endpoint not found!"));
+            res.send(utilities.response(false, 'API endpoint not found!'));
         }
     }), (error) => {
         res.send(utilities.response(false, error));
@@ -1568,6 +1560,6 @@ app.post("/:endpoint(*)?", (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 app.listen(PORT, () => {
     console.log(`Server Running here 👉 http://localhost:${PORT}`);
-    console.log("Temp Dir: " + os.tmpdir());
+    console.log('Temp Dir: ' + os.tmpdir());
 });
 //# sourceMappingURL=index.js.map
