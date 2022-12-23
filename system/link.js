@@ -16,7 +16,7 @@ exports.Link = void 0;
 const database_1 = require("./database");
 const qs_1 = __importDefault(require("qs"));
 class Link {
-    apiRun(config, db_port, method = 'GET', api_name = '', path = null, queryParams = {}, bodyParams = null) {
+    apiRun(config, db_port, method = 'GET', api_name = '', path = null, queryParams = {}, bodyParams = null, contentType = 'application/json') {
         return __awaiter(this, void 0, void 0, function* () {
             const promise = new Promise((resolve, reject) => {
                 const db = new database_1.Database();
@@ -29,6 +29,9 @@ class Link {
                 db.execute(config, db_port, query).then((data) => __awaiter(this, void 0, void 0, function* () {
                     if (data.length > 0) {
                         const link = data[0][0];
+                        if (contentType === null) {
+                            contentType = 'application/json';
+                        }
                         let auth = null;
                         if (link.auth_method === 'bearer' || link.auth_method === 'basic') {
                             if (link.api_key !== '' && link.api_secret !== '') {
@@ -52,6 +55,9 @@ class Link {
                                 method: method.toLowerCase(),
                                 url: link.api_url + '/' + path,
                                 auth,
+                                headers: {
+                                    'Content-Type': contentType
+                                },
                                 params: queryParams !== null ? queryParams : [],
                                 data: bodyParams !== null ? bodyParams : []
                             }).then((response) => {
@@ -71,7 +77,8 @@ class Link {
                                 method: method.toLowerCase(),
                                 url: link.api_url + '/' + path,
                                 headers: {
-                                    Authorization: `${auth2.header_prefix ? auth2.header_prefix : 'Bearer'} ${auth2.access_token}`
+                                    Authorization: `${auth2.header_prefix ? auth2.header_prefix : 'Bearer'} ${auth2.access_token}`,
+                                    // 'Content-Type': contentType
                                 },
                                 params: queryParams !== null ? queryParams : [],
                                 data: bodyParams !== null ? bodyParams : []

@@ -1138,7 +1138,7 @@ app.post('/link/:api_name/:endpoint(*)?', (req, res) => __awaiter(void 0, void 0
     }
     const { api_name, endpoint } = req.params;
     const link = new link_1.Link();
-    link.apiRun(config, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'POST', api_name, endpoint, null, req.body).then((data) => {
+    link.apiRun(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'POST', api_name, endpoint, null, req.body).then((data) => {
         res.send(utilities.response(true, data));
     }, (error) => {
         res.send(utilities.response(false, error));
@@ -1197,7 +1197,7 @@ app.put('/link/:api_name/:endpoint(*)?', (req, res) => __awaiter(void 0, void 0,
     }
     const { api_name, endpoint } = req.params;
     const link = new link_1.Link();
-    link.apiRun(config, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'PUT', api_name, endpoint, null, req.body).then((data) => {
+    link.apiRun(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'PUT', api_name, endpoint, null, req.body).then((data) => {
         res.send(utilities.response(true, data));
     }, (error) => {
         res.send(utilities.response(false, error));
@@ -1256,7 +1256,7 @@ app.patch('/link/:api_name/:endpoint(*)?', (req, res) => __awaiter(void 0, void 
     }
     const { api_name, endpoint } = req.params;
     const link = new link_1.Link();
-    link.apiRun(config, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'PATCH', api_name, endpoint, null, req.body).then((data) => {
+    link.apiRun(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'PATCH', api_name, endpoint, null, req.body).then((data) => {
         res.send(utilities.response(true, data));
     }, (error) => {
         res.send(utilities.response(false, error));
@@ -1315,7 +1315,7 @@ app.delete('/link/:api_name/:endpoint(*)?', (req, res) => __awaiter(void 0, void
     }
     const { api_name, endpoint } = req.params;
     const link = new link_1.Link();
-    link.apiRun(config, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'DELETE', api_name, endpoint, null, req.body).then((data) => {
+    link.apiRun(backConfig, backConfig.over_ssh === 1 ? PORT : backConfig.db_port, 'DELETE', api_name, endpoint, null, req.body).then((data) => {
         res.send(utilities.response(true, data));
     }, (error) => {
         res.send(utilities.response(false, error));
